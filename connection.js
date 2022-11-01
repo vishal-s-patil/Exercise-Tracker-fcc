@@ -5,4 +5,6 @@ mongoose.connect(process.env.MONGODB_URI, {
     useUnifiedTopology: true
 })
 
-exports.connection = mongoose.connection;
+const connection = mongoose.connection
+
+module.exports = connection

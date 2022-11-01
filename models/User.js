@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
-let User = new mongoose.Schema({
+let userSchema = new mongoose.Schema({
     username: String
 })
 
-exports.User = mongoose.model('User', User);
+module.exports = mongoose.model('User', userSchema);
