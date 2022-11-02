@@ -90,7 +90,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 		username = exercises[0].username;
 	}
 
-	let logs = [];
+	let log = [];
 	let l = limit;
 	for (let index = 0; index < exercises.length; index++) {
 		const exercise = exercises[index];
@@ -102,7 +102,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 		}
 
 		if (from == undefined && to == undefined) {
-			logs.push({
+			log.push({
 				description: exercise.description,
 				duration: exercise.duration,
 				date: exercise.date
@@ -111,7 +111,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 		else {
 			if (from != undefined && to != undefined) {
 				if (((new Date(exercise.date).getTime()) >= (new Date(from).getTime())) && ((new Date(exercise.date).getTime()) <= (new Date(to).getTime()))) {
-					logs.push({
+					log.push({
 						description: exercise.description,
 						duration: exercise.duration,
 						date: exercise.date
@@ -119,14 +119,14 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 				}
 			}
 			else if (from != undefined && (new Date(exercise.date).getTime()) >= (new Date(from).getTime())) {
-				logs.push({
+				log.push({
 					description: exercise.description,
 					duration: exercise.duration,
 					date: exercise.date
 				})
 			}
 			else if (to != undefined && (new Date(exercise.date).getTime()) <= (new Date(to).getTime())) {
-				logs.push({
+				log.push({
 					description: exercise.description,
 					duration: exercise.duration,
 					date: exercise.date
@@ -139,7 +139,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 		_id,
 		username,
 		count: exercises.length,
-		logs
+		log
 	});
 });
 
