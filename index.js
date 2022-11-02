@@ -29,19 +29,29 @@ app.get('/', (req, res) => {
 app.post('/api/users', async (req, res) => {
 	let username = req.body.username;
 
-	let user = new User({
-		username: username
-	})
+	try {
+		let user = new User({
+			username: username
+		})
 
-	await user.save();
+		await user.save();
 
-	res.json({ username: username, _id: user._id });
+		res.json({ username: username, _id: user._id });
+	}
+	catch (e) {
+		res.status(400).send(e);
+	}
 })
 
 // to list the users 
 app.get('/api/users', async (req, res) => {
-	allusers = await User.find({});
-	res.json(allusers);
+	try {
+		allusers = await User.find({});
+		res.json(allusers);
+	}
+	catch (e) {
+		res.status(400).send(e);
+	}
 })
 
 // add exercise data to db
@@ -50,103 +60,99 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 	const userId = req.params._id;
 	let { date } = req.body;
 
-	if (date.length == 0) {
-		let d = new Date();
-		date = d.toDateString();
-	}
-	else {
-		let d = new Date(date);
-		date = d.toDateString();
-	}
-
-	let user = await User.findById({ _id: userId }).clone().catch(function (err) { console.log(err) });
-	if (!user) {
-		res.json({ error: "wrong id" });
-		return;
-	}
-	let exercise = new Exercise({
-		userId,
-		username: user.username,
-		date,
-		duration: parseInt(duration),
-		description
-	});
-	await exercise.save();
-
-	res.json({
-		_id: userId,
-		username: user.username,
-		date,
-		duration: parseInt(duration),
-		description
-	});
-});
-
-app.get('/api/users/:_id/logs', async (req, res) => {
-	let _id = req.params._id;
-	const { from, to, limit } = req.query;
-	let exercises = await Exercise.find({ userId: _id });
-
-	let username;
-	if (exercises.length != 0) {
-		username = exercises[0].username;
-	}
-	if (username == undefined) {
-		res.status(401).json({ error: "wrong id" });
-		return;
-	}
-
-	let log = [];
-	let l = limit;
-	for (let index = 0; index < exercises.length; index++) {
-		const exercise = exercises[index];
-
-		if (l != undefined) {
-			l -= 1;
-			if (l < 0)
-				break;
-		}
-
-		if (from == undefined && to == undefined) {
-			log.push({
-				description: exercise.description,
-				duration: exercise.duration,
-				date: exercise.date
-			})
+	try {
+		if (date.length == 0) {
+			let d = new Date();
+			date = d.toDateString();
 		}
 		else {
-			if (from != undefined && to != undefined) {
-				if (((new Date(exercise.date).getTime()) >= (new Date(from).getTime())) && ((new Date(exercise.date).getTime()) <= (new Date(to).getTime()))) {
-					log.push({
-						description: exercise.description,
-						duration: exercise.duration,
-						date: exercise.date
-					})
-				}
-			}
-			else if (from != undefined && (new Date(exercise.date).getTime()) >= (new Date(from).getTime())) {
-				log.push({
-					description: exercise.description,
-					duration: exercise.duration,
-					date: exercise.date
-				})
-			}
-			else if (to != undefined && (new Date(exercise.date).getTime()) <= (new Date(to).getTime())) {
-				log.push({
-					description: exercise.description,
-					duration: exercise.duration,
-					date: exercise.date
-				})
-			}
+			let d = new Date(date);
+			date = d.toDateString();
 		}
-	}
 
-	res.json({
-		_id,
-		username,
-		count: exercises.length,
-		log
-	});
+		let user = await User.findById({ _id: userId }).clone().catch(function (err) { console.log(err) });
+		if (!user) {
+			res.json({ error: "wrong id" });
+			return;
+		}
+		let exercise = new Exercise({
+			userId,
+			username: user.username,
+			date,
+			duration: parseInt(duration),
+			description
+		});
+		await exercise.save();
+
+		res.json({
+			_id: userId,
+			username: user.username,
+			date,
+			duration: parseInt(duration),
+			description
+		});
+	}
+	catch (e) {
+		res.status(400).send(e);
+	}
+});
+
+app.get('/api/users/:_id/logs', (req, res) => {
+	const { from, to } = req.query;
+	let { limit } = req.query;
+	let userId = req.params._id;
+
+	User.findById({ _id: userId }, (err, user) => {
+		let username = user.username;
+
+		var query = {
+			userId: userId,
+		}
+
+		if (from != undefined) {
+			query.date = { $gte: (new Date(from)).getTime() }
+		}
+		if (to != undefined) {
+			query.date = { $lte: (new Date(to)).getTime() }
+		}
+
+		if (limit == undefined) {
+			limit = 5000;
+		}
+
+		if (err) {
+			console.log(err);
+			res.status(400).json({ error: "error" });
+			return;
+		}
+		else {
+			Exercise.find(query).limit(+limit).exec((err, data) => {
+				let log = []
+
+				if (err) {
+					console.log(err);
+					res.status(400).json({ error: "error" });
+					return;
+				}
+				else {
+					let log = data.map((item) => {
+						return {
+							"description": item.description,
+							"duration": parseInt(item.duration),
+							"date": item.date
+						}
+					})
+
+					res.json({
+						_id: userId,
+						username,
+						count: log.length,
+						log
+					});
+				}
+			})
+		}
+	})
 });
 
 
