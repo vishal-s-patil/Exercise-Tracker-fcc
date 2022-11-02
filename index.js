@@ -55,19 +55,90 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 		let d = new Date();
 		date = d.toDateString();
 	}
+	else {
+		let d = new Date(date);
+		date = d.toDateString();
+	}
 
 	let user = await User.findById({ _id }).clone().catch(function (err) { console.log(err) });
-
-	res.json({
-		_id,
+	let obj = {
+		user_id: _id,
 		username: user.username,
 		date,
 		duration,
 		description
-	})
+	}
+
+	let exercise = new Exercise(obj);
+	await exercise.save();
+
+	delete obj['user_id'];
+	obj["_id"] = _id;
+	res.json(obj);
 });
 
+app.get('/api/users/:_id/logs', async (req, res) => {
+	let _id = req.params._id;
+	const { from, to, limit } = req.query;
+	let exercises = await Exercise.find({ user_id: _id });
 
+	let username;
+	if (exercises.length != 0) {
+		username = exercises[0].username;
+	}
+
+	let logs = [];
+	let l = limit;
+	for (let index = 0; index < exercises.length; index++) {
+		const exercise = exercises[index];
+
+		if (l != undefined) {
+			l -= 1;
+			if (l < 0)
+				break;
+		}
+
+		if (from == undefined && to == undefined) {
+			logs.push({
+				description: exercise.description,
+				duration: exercise.duration,
+				date: exercise.date
+			})
+		}
+		else {
+			if (from != undefined && to != undefined) {
+				if (((new Date(exercise.date).getTime()) >= (new Date(from).getTime())) && ((new Date(exercise.date).getTime()) <= (new Date(to).getTime()))) {
+					logs.push({
+						description: exercise.description,
+						duration: exercise.duration,
+						date: exercise.date
+					})
+				}
+			}
+			else if (from != undefined && (new Date(exercise.date).getTime()) >= (new Date(from).getTime())) {
+				logs.push({
+					description: exercise.description,
+					duration: exercise.duration,
+					date: exercise.date
+				})
+			}
+			else if (to != undefined && (new Date(exercise.date).getTime()) <= (new Date(to).getTime())) {
+				logs.push({
+					description: exercise.description,
+					duration: exercise.duration,
+					date: exercise.date
+				})
+			}
+		}
+	}
+
+	res.json({
+		_id,
+		username,
+		count: exercises.length,
+		logs
+	});
+});
 
 
 
