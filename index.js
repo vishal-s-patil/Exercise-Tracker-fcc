@@ -7,7 +7,6 @@ let User = require('./models/User.js');
 let Logs = require('./models/Logs.js');
 require('dotenv').config();
 const connection = require('./connection.js');
-const { schema } = require('./models/Exercise.js');
 
 
 app.use(cors());
@@ -125,23 +124,28 @@ app.get('/api/users/:_id/logs', (req, res) => {
 		if (err) {
 			console.log(err);
 			res.status(400).json({ error: "error" });
-			return;
 		}
 		else {
+			if (limit == 0) {
+				res.json({
+					"_id": userId,
+					username,
+					count: 0,
+					log: []
+				});
+			}
 			Exercise.find(query).limit(+limit).exec((err, data) => {
-				let log = []
 
 				if (err) {
 					console.log(err);
 					res.status(400).json({ error: "error" });
-					return;
 				}
 				else {
 					let log = data.map((item) => {
 						return {
 							"description": item.description,
 							"duration": parseInt(item.duration),
-							"date": item.date
+							"date": item.date.toDateString()
 						}
 					})
 
