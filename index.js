@@ -61,20 +61,23 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 	}
 
 	let user = await User.findById({ _id }).clone().catch(function (err) { console.log(err) });
-	let obj = {
+
+	let exercise = new Exercise({
 		user_id: _id,
 		username: user.username,
 		date,
 		duration,
 		description
-	}
-
-	let exercise = new Exercise(obj);
+	});
 	await exercise.save();
 
-	delete obj['user_id'];
-	obj["_id"] = _id;
-	res.json(obj);
+	res.json({
+		_id,
+		username: user.username,
+		date,
+		duration,
+		description
+	});
 });
 
 app.get('/api/users/:_id/logs', async (req, res) => {
