@@ -60,7 +60,10 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 	}
 
 	let user = await User.findById({ _id: userId }).clone().catch(function (err) { console.log(err) });
-
+	if (!user) {
+		res.json({ error: "wrong id" });
+		return;
+	}
 	let exercise = new Exercise({
 		userId,
 		username: user.username,
@@ -87,6 +90,10 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 	let username;
 	if (exercises.length != 0) {
 		username = exercises[0].username;
+	}
+	if (username == undefined) {
+		res.status(401).json({ error: "wrong id" });
+		return;
 	}
 
 	let log = [];
