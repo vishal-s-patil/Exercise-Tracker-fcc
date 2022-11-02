@@ -4,8 +4,10 @@ const cors = require('cors')
 const bodyParser = require('body-parser');
 let Exercise = require('./models/Exercise.js');
 let User = require('./models/User.js');
+let Logs = require('./models/Logs.js');
 require('dotenv').config();
 const connection = require('./connection.js');
+const { schema } = require('./models/Exercise.js');
 
 
 app.use(cors());
@@ -144,9 +146,9 @@ app.get('/api/users/:_id/logs', (req, res) => {
 					})
 
 					res.json({
-						_id: userId,
+						"_id": userId,
 						username,
-						count: log.length,
+						count: Number(log.length),
 						log
 					});
 				}
