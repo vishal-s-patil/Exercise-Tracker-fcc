@@ -42,9 +42,30 @@ app.post('/api/users', async (req, res) => {
 // to list the users 
 app.get('/api/users', async (req, res) => {
 	allusers = await User.find({});
-	console.log(allusers);
 	res.json(allusers);
 })
+
+// add exercise data to db
+app.post('/api/users/:_id/exercises', async (req, res) => {
+	const { description, duration } = req.body;
+	const _id = req.params._id;
+	let { date } = req.body;
+
+	if (date.length == 0) {
+		let d = new Date();
+		date = d.toDateString();
+	}
+
+	let user = await User.findById({ _id }).clone().catch(function (err) { console.log(err) });
+
+	res.json({
+		_id,
+		username: user.username,
+		date,
+		duration,
+		description
+	})
+});
 
 
 
