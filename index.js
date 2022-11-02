@@ -150,9 +150,9 @@ app.get('/api/users/:_id/logs', (req, res) => {
 					})
 
 					res.json({
-						"_id": userId,
 						username,
 						count: Number(log.length),
+						"_id": userId,
 						log
 					});
 				}
