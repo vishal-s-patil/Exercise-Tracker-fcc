@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 let Exercise = require('./models/Exercise.js');
 let User = require('./models/User.js');
-const connection = require('./connection.js');
 
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -13,46 +12,49 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static('public'))
 
-connection.on('error', (err) => {
-	console.log(err);
-	res.status(401).json({ error: 'connection error' });
-})
-connection.once('open', () => {
-	console.log('db connected');
-})
-
 app.get('/', (req, res) => {
 	res.sendFile(__dirname + '/views/index.html')
 });
 
 // to store the user 
 app.post('/api/users', async (req, res) => {
-	let username = req.body.username;
+	const username = req.body.username;
 
-	try {
-		let user = new User({
-			username: username
-		})
+	let user = await User.findOne({ username });
 
+	if (!user) {
+		user = new User({ username: username });
 		await user.save();
 
-		res.json({ username: username, _id: user._id });
-	}
-	catch (e) {
-		res.status(400).send(e);
+		res.status(200).json({
+			username,
+			_id: user._id
+		});
+	} else {
+		res.status(400).send("This user already exists.");
 	}
 })
 
 // to list the users 
 app.get('/api/users', async (req, res) => {
-	try {
-		allusers = await User.find({});
-		res.json(allusers);
-	}
-	catch (e) {
-		res.status(400).send(e);
-	}
+	User.find()
+		.then((result) => res.status(200).json(result))
+		.catch((error) => res.status(400).send(error));
 })
+
+// this function is because different time zones 
+const getDate = (date) => {
+	if (!date) {
+		return new Date().toDateString();
+	}
+	const correctDate = new Date();
+	const dateString = date.split("-");
+	correctDate.setFullYear(dateString[0]);
+	correctDate.setDate(dateString[2]);
+	correctDate.setMonth(dateString[1] - 1);
+
+	return correctDate.toDateString();
+};
 
 // add exercise data to db
 app.post('/api/users/:_id/exercises', async (req, res) => {
@@ -83,7 +85,6 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 			duration: parseInt(duration),
 			description
 		});
-		console.log(typeof (exercise._id));
 		await exercise.save();
 
 		res.json({
@@ -122,7 +123,6 @@ app.get('/api/users/:_id/logs', (req, res) => {
 
 			fromDate = fromDate.getTime();
 			toDate = toDate.getTime();
-			console.log(fromDate, toDate);
 			var log = exercises.filter((session) => {
 				let sessionDate = new Date(session.date).getTime();
 				return sessionDate >= fromDate && sessionDate <= toDate;
