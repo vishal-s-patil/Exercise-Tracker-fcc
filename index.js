@@ -58,46 +58,28 @@ const getDate = (date) => {
 
 // add exercise data to db
 app.post('/api/users/:_id/exercises', async (req, res) => {
-	const { description, duration } = req.body;
+	const { description, duration, date } = req.body;
 	const userId = req.params._id;
-	let { date } = req.body;
 
-	try {
-		// date processing 
-		if (date.length == 0) {
-			let d = new Date()
-			date = d.toDateString();
-		}
-		else {
-			let d = new Date(date);
-			date = d.toDateString();
-		}
+	let user = await User.findById({ _id: userId }).clone().catch(function (err) { console.log(err) });
 
-		let user = await User.findById({ _id: userId }).clone().catch(function (err) { console.log(err) });
-		if (!user) {
-			res.json({ error: "wrong id" });
-			return;
-		}
-		let exercise = new Exercise({
-			userId,
-			username: user.username,
-			date,
-			duration: parseInt(duration),
-			description
-		});
-		await exercise.save();
+	let exercise = new Exercise({
+		userId,
+		username: user.username,
+		description,
+		duration: parseInt(duration),
+		date: getDate(date)
+	})
 
-		res.json({
-			_id: userId,
-			username: user.username,
-			date: (new Date(date)).toDateString(),
-			duration: parseInt(duration),
-			description
-		});
-	}
-	catch (e) {
-		res.status(400).send(e);
-	}
+	await exercise.save();
+
+	res.json({
+		_id: userId,
+		username: user.username,
+		date: (new Date(date)).toDateString(),
+		duration: parseInt(duration),
+		description
+	});
 });
 
 app.get('/api/users/:_id/logs', (req, res) => {
