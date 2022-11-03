@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 let Exercise = require('./models/Exercise.js');
 let User = require('./models/User.js');
+require('./connection.js');
 
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -21,7 +22,6 @@ app.post('/api/users', async (req, res) => {
 	const username = req.body.username;
 
 	let user = await User.findOne({ username });
-
 	if (!user) {
 		user = new User({ username: username });
 		await user.save();
