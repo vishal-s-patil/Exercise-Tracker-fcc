@@ -83,6 +83,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 			duration: parseInt(duration),
 			description
 		});
+		console.log(typeof (exercise._id));
 		await exercise.save();
 
 		res.json({
@@ -104,51 +105,47 @@ app.get('/api/users/:_id/logs', (req, res) => {
 	let userId = req.params._id;
 
 	User.findById({ _id: userId }, (err, user) => {
-		if (err) {
-			console.log(err);
-			res.status(400).json({ error: 'error' });
-		}
-		else {
-			let username = user.username;
 
-			Exercise.find({ userId }, (err, exercises) => {
-				console.log(exercises.length);
-				if (err) {
-					console.log(err);
-					res.status(400).json({ error: 'error' });
-				}
-				else {
-					let fromDate = new Date(0);
-					let toDate = new Date();
+		let username = user.username;
 
-					if (from) {
-						fromDate = new Date(req.query.from);
-					}
+		Exercise.find({ userId }, (err, exercises) => {
+			let fromDate = new Date(0);
+			let toDate = new Date();
 
-					if (to) {
-						toDate = new Date(req.query.to);
-					}
+			if (from) {
+				fromDate = new Date(req.query.from);
+			}
 
-					fromDate = fromDate.getTime();
-					toDate = toDate.getTime();
-					console.log(fromDate, toDate);
-					var log = exercises.filter((session) => {
-						let sessionDate = new Date(session.date).getTime();
-						return sessionDate >= fromDate && sessionDate <= toDate;
-					})
-				}
+			if (to) {
+				toDate = new Date(req.query.to);
+			}
 
-				if (limit) {
-					log = log.slice(0, limit);
-				}
+			fromDate = fromDate.getTime();
+			toDate = toDate.getTime();
+			console.log(fromDate, toDate);
+			var log = exercises.filter((session) => {
+				let sessionDate = new Date(session.date).getTime();
+				return sessionDate >= fromDate && sessionDate <= toDate;
+			})
+
+			if (limit) {
+				log = log.slice(0, limit);
+			}
+			if (log.length == 0) {
 				res.json({
 					_id: userId,
 					username,
 					count: log.length,
-					log
+					log: []
 				})
+			}
+			res.json({
+				_id: userId,
+				username,
+				count: log.length,
+				log
 			})
-		}
+		})
 	})
 });
 
